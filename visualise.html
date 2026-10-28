@@ -51,7 +51,7 @@
   .field { display:block; margin:0 0 14px; }
   .field span { display:block; font-size:12px; letter-spacing:0.1em; text-transform:uppercase; color:#6B766E; margin-bottom:6px; }
   .field input, .field select, .field textarea { width:100%; border:1px solid #E3DED2; background:#fff; padding:14px; border-radius:2px; }
-  .drop { border:1px dashed #C9A44A; background:#fff; padding:36px 20px; text-align:center; border-radius:2px; cursor:pointer; }
+  .drop { display:block; border:1px dashed #C9A44A; background:#fff; padding:36px 20px; text-align:center; border-radius:2px; cursor:pointer; }
   .drop:hover { background:#FFFBF0; }
   canvas { max-width:100%; height:auto; display:block; border-radius:2px; }
   .stage { background:#070E09; padding:0; border-radius:2px; touch-action:manipulation; }
@@ -131,13 +131,16 @@
   <section class="pane" data-pane="mark">
     <p class="eyebrow">Step 2</p>
     <h2>Outline the lawn area</h2>
-    <p class="lead">Tap around the edge of the area to be covered, point by point. Aim for the corners. You can skip this and we'll cover the lower part of the photo.</p>
+    <p class="lead">We try to find the lawn automatically. Adjust the sensitivity if it misses or over-selects, or tap around the area yourself, corner by corner. If you skip this we cover the lower part of the photo.</p>
     <div class="stage"><canvas id="markCv"></canvas></div>
     <div class="row" style="margin-top:14px">
+      <button class="btn" id="detect">Detect lawn</button>
       <button class="btn ghost" id="undo">Undo point</button>
       <button class="btn ghost" id="clear">Clear outline</button>
       <span class="note" id="ptCount">0 points</span>
     </div>
+    <label class="field" style="margin-top:14px;max-width:360px"><span>Detection sensitivity</span><input id="sens" type="range" min="0" max="100" value="50" /></label>
+    <p class="note" id="detMsg"></p>
     <div class="row">
       <button class="btn" id="markNext">Continue</button>
       <button class="btn ghost" data-back="photo">Back</button>
@@ -167,6 +170,7 @@
     <p class="eyebrow">Step 4</p>
     <h2>Choose your turf</h2>
     <p class="lead">Installed prices per m² for your selected surface, excluding VAT.</p>
+    <div class="stage" style="margin-bottom:16px"><canvas id="prevCv"></canvas></div>
     <div class="grid" id="turfs"></div>
     <div class="row"><button class="btn" id="turfNext">Continue</button><button class="btn ghost" data-back="size">Back</button></div>
   </section>
@@ -240,7 +244,7 @@
   var TO_EMAIL = 'leon@primeturf.co.za', TO_WA = '27768048868';
   var ORDER = ['photo', 'mark', 'size', 'turf', 'details', 'concept'];
   var LABELS = { photo: 'Photo', mark: 'Outline', size: 'Size', turf: 'Turf', details: 'Details', concept: 'Concept' };
-  var S = { step: 'photo', img: null, pts: [], area: 50, surface: 'grass', turf: 'spring', rects: [] };
+  var S = { step: 'photo', img: null, pts: [], mask: null, cover: 0, area: 50, surface: 'grass', turf: 'spring', rects: [] };
   var $ = function (id) { return document.getElementById(id); };
   var money = function (n) { return 'R' + Math.round(Number(n) || 0).toLocaleString('en-ZA'); };
   var turfObj = function () { return CFG.turfs.filter(function (t) { return t.id === S.turf; })[0]; };
@@ -259,7 +263,8 @@
     $('steps').innerHTML = v.map(function (s, k) {
       return '<li class="' + (k < i ? 'done' : k === i ? 'on' : '') + '">' + LABELS[s] + '</li>';
     }).join('');
-    if (step === 'mark') drawMark();
+    if (step === 'mark') { if (!S.mask && !S.pts.length) runDetect(); else drawMark(); }
+    if (step === 'turf') renderTo($('prevCv'), 900);
     if (step === 'concept') renderConcept();
     $('live').style.display = (step === 'photo' || step === 'mark') ? 'none' : 'flex';
     $('liveTotal').textContent = money(calc().total);
@@ -285,7 +290,7 @@
       var c = document.createElement('canvas');
       c.width = Math.round(im.naturalWidth * r); c.height = Math.round(im.naturalHeight * r);
       c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
-      S.img = c; S.pts = [];
+      S.img = c; S.pts = []; S.mask = null;
       URL.revokeObjectURL(url);
       $('photoMsg').textContent = 'Photo ready: ' + f.name;
       $('photoNext').disabled = false;
@@ -294,7 +299,7 @@
     im.src = url;
   });
   $('photoNext').addEventListener('click', function () { go('mark'); });
-  $('photoSkip').addEventListener('click', function () { S.img = null; S.pts = []; go('size'); });
+  $('photoSkip').addEventListener('click', function () { S.img = null; S.pts = []; S.mask = null; go('size'); });
 
   /* ---------- 2 mark ---------- */
   var markCv = $('markCv');
@@ -304,6 +309,12 @@
     var g = markCv.getContext('2d');
     g.drawImage(S.img, 0, 0);
     var u = Math.max(4, markCv.width / 160);
+    if (S.mask && !S.pts.length) {
+      var t = document.createElement('canvas'); t.width = markCv.width; t.height = markCv.height;
+      var tg = t.getContext('2d'); tg.drawImage(S.mask, 0, 0, t.width, t.height);
+      tg.globalCompositeOperation = 'source-in'; tg.fillStyle = 'rgba(201,164,74,0.45)'; tg.fillRect(0, 0, t.width, t.height);
+      g.drawImage(t, 0, 0);
+    }
     if (S.pts.length) {
       g.beginPath();
       S.pts.forEach(function (p, i) { i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]); });
@@ -315,12 +326,63 @@
   }
   markCv.addEventListener('click', function (e) {
     var r = markCv.getBoundingClientRect();
-    S.pts.push([(e.clientX - r.left) * markCv.width / r.width, (e.clientY - r.top) * markCv.height / r.height]);
+    S.mask = null; $('detMsg').textContent = ''; S.pts.push([(e.clientX - r.left) * markCv.width / r.width, (e.clientY - r.top) * markCv.height / r.height]);
     drawMark();
   });
   $('undo').addEventListener('click', function () { S.pts.pop(); drawMark(); });
-  $('clear').addEventListener('click', function () { S.pts = []; drawMark(); });
+  $('clear').addEventListener('click', function () { S.pts = []; S.mask = null; $('detMsg').textContent = ''; drawMark(); });
   $('markNext').addEventListener('click', function () { go('size'); });
+
+  /* ---------- automatic lawn detection (runs in the browser) ---------- */
+  function detect(tol) {
+    var W = Math.min(360, S.img.width), H = Math.max(1, Math.round(S.img.height * W / S.img.width));
+    var c = document.createElement('canvas'); c.width = W; c.height = H;
+    var g = c.getContext('2d'); g.drawImage(S.img, 0, 0, W, H);
+    var d = g.getImageData(0, 0, W, H).data, n = W * H, m = new Uint8Array(n);
+    var satMin = 0.34 - tol * 0.0024, i, x, y;
+    for (i = 0; i < n; i++) {
+      var r = d[i * 4], gg = d[i * 4 + 1], b = d[i * 4 + 2], mx = Math.max(r, gg, b), mn = Math.min(r, gg, b);
+      m[i] = (gg >= mx && gg >= r * 1.04 && gg >= b * 1.08 && mx > 40 && (mx - mn) / mx > satMin) ? 1 : 0;
+    }
+    for (var it = 0; it < 2; it++) {            // 3x3 majority filter removes speckle and fills pinholes
+      var o = new Uint8Array(n);
+      for (y = 1; y < H - 1; y++) for (x = 1; x < W - 1; x++) {
+        var k = 0; for (var dy = -1; dy <= 1; dy++) for (var dx = -1; dx <= 1; dx++) k += m[(y + dy) * W + x + dx];
+        o[y * W + x] = k >= 5 ? 1 : 0;
+      }
+      m = o;
+    }
+    var seen = new Uint8Array(n), keep = new Uint8Array(n), minSize = n * 0.01, total = 0;
+    for (i = 0; i < n; i++) {
+      if (!m[i] || seen[i]) continue;
+      var stack = [i], comp = []; seen[i] = 1;
+      while (stack.length) {
+        var p = stack.pop(); comp.push(p);
+        var px = p % W, py = (p / W) | 0, nb = [px > 0 ? p - 1 : -1, px < W - 1 ? p + 1 : -1, py > 0 ? p - W : -1, py < H - 1 ? p + W : -1];
+        for (var q = 0; q < 4; q++) { var v = nb[q]; if (v >= 0 && m[v] && !seen[v]) { seen[v] = 1; stack.push(v); } }
+      }
+      if (comp.length >= minSize) { comp.forEach(function (p) { keep[p] = 1; }); total += comp.length; }
+    }
+    var out = g.createImageData(W, H);
+    for (i = 0; i < n; i++) { out.data[i * 4] = out.data[i * 4 + 1] = out.data[i * 4 + 2] = 255; out.data[i * 4 + 3] = keep[i] ? 255 : 0; }
+    var mc = document.createElement('canvas'); mc.width = W; mc.height = H; mc.getContext('2d').putImageData(out, 0, 0);
+    return { canvas: mc, cover: total / n };
+  }
+  function runDetect() {
+    if (!S.img) return;
+    var r = detect(+$('sens').value);
+    S.pts = [];
+    if (r.cover < 0.02) {
+      S.mask = null;
+      $('detMsg').textContent = 'We could not find a lawn automatically — this works best on existing green grass. Tap the corners of the area instead.';
+    } else {
+      S.mask = r.canvas;
+      $('detMsg').textContent = 'Lawn found (about ' + Math.round(r.cover * 100) + '% of the photo, shown in gold). Adjust sensitivity, or tap points to outline it yourself.';
+    }
+    drawMark();
+  }
+  $('detect').addEventListener('click', runDetect);
+  $('sens').addEventListener('input', function () { runDetect(); });
 
   /* ---------- 3 size ---------- */
   $('presets').innerHTML = CFG.presets.map(function (n) { return '<button type="button" class="opt" data-n="' + n + '">' + n + ' m²</button>'; }).join('');
@@ -365,7 +427,7 @@
     $('liveTotal').textContent = money(calc().total);
   }
   $('turfs').addEventListener('click', function (e) {
-    var b = e.target.closest('[data-id]'); if (b) { S.turf = b.getAttribute('data-id'); paintTurfs(); }
+    var b = e.target.closest('[data-id]'); if (b) { S.turf = b.getAttribute('data-id'); paintTurfs(); renderTo($('prevCv'), 900); }
   });
   $('turfNext').addEventListener('click', function () { go('details'); });
 
@@ -405,32 +467,48 @@
     g.strokeStyle = '#8B7A5C'; g.lineWidth = w * 0.008; g.beginPath(); g.moveTo(L, top); g.lineTo(w * 0.02, h * 0.97); g.moveTo(R, top); g.lineTo(w * 0.98, h * 0.97); g.stroke();
     g.fillStyle = '#FFD86B'; g.beginPath(); g.arc(w * 0.9, h * 0.1, h * 0.05, 0, 7); g.fill();
   }
-  function renderConcept() {
-    var t = turfObj(), g = outCv.getContext('2d');
-    $('cTurf').textContent = t.label + ' (' + t.pile + ')';
-    if (S.img) {
-      var w = S.img.width, h = S.img.height;
-      outCv.width = w; outCv.height = h;
-      g.drawImage(S.img, 0, 0);
-      var pts = S.pts.length > 2 ? S.pts : [[0, h * 0.55], [w, h * 0.55], [w, h], [0, h]];
-      var tile = document.createElement('canvas'); tile.width = w; tile.height = h;
-      turfFill(tile.getContext('2d'), w, h, 0, 0, t, false);
-      g.save(); g.beginPath(); pts.forEach(function (p, i) { i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]); }); g.closePath(); g.clip();
-      g.globalAlpha = 0.86; g.drawImage(tile, 0, 0);
-      g.globalAlpha = 0.7; g.globalCompositeOperation = 'soft-light'; g.drawImage(S.img, 0, 0);   // keep the photo's light and shadow
-      g.restore();
+  function lawnMask(w, h) {
+    var m = document.createElement('canvas'); m.width = w; m.height = h;
+    var g = m.getContext('2d'); g.fillStyle = '#fff';
+    if (S.pts.length > 2) {
+      g.beginPath(); S.pts.forEach(function (p, i) { var x = p[0] * w / S.img.width, y = p[1] * h / S.img.height; i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.closePath(); g.fill();
+    } else if (S.mask) {
+      g.imageSmoothingEnabled = true; g.drawImage(S.mask, 0, 0, w, h);
     } else {
-      outCv.width = 1200; outCv.height = 800;
+      g.fillRect(0, h * 0.55, w, h * 0.45);
+    }
+    return m;
+  }
+  function renderTo(cv, maxW) {
+    var t = turfObj(), g = cv.getContext('2d');
+    if (S.img) {
+      var r = Math.min(1, maxW / S.img.width), w = Math.round(S.img.width * r), h = Math.round(S.img.height * r);
+      cv.width = w; cv.height = h;
+      g.drawImage(S.img, 0, 0, w, h);
+      var layer = document.createElement('canvas'); layer.width = w; layer.height = h;
+      var lg = layer.getContext('2d');
+      turfFill(lg, w, h, 0, 0, t, false);
+      lg.globalCompositeOperation = 'destination-in'; lg.drawImage(lawnMask(w, h), 0, 0);   // turf only where the lawn is
+      lg.globalCompositeOperation = 'source-atop'; lg.globalAlpha = 0.7;
+      lg.drawImage(S.img, 0, 0, w, h);                                                      // keep the photo's light and shadow
+      lg.globalAlpha = 1; lg.globalCompositeOperation = 'source-over';
+      g.save(); g.globalAlpha = 0.9; g.drawImage(layer, 0, 0); g.restore();
+    } else {
+      cv.width = 1200; cv.height = 800;
       sampleScene(g, 1200, 800, t);
       g.fillStyle = 'rgba(11,61,46,0.78)'; g.fillRect(0, 0, 330, 34);
       g.fillStyle = '#E8C96E'; g.font = '600 14px Montserrat, sans-serif'; g.fillText('SAMPLE GARDEN — no photo supplied', 14, 22);
     }
-    g.save(); g.fillStyle = 'rgba(7,14,9,0.7)'; var wm = outCv.width;
+    g.save(); g.fillStyle = 'rgba(7,14,9,0.7)'; var wm = cv.width;
     var fs = Math.max(13, wm / 60); g.font = '600 ' + fs + 'px Montserrat, sans-serif';
     var txt = 'PrimeTurf · ' + t.label + ' ' + t.pile + ' · concept'; var tw = g.measureText(txt).width;
-    g.fillRect(wm - tw - fs * 1.6, outCv.height - fs * 2.3, tw + fs * 1.6, fs * 2.3);
-    g.fillStyle = '#E8C96E'; g.fillText(txt, wm - tw - fs * 0.8, outCv.height - fs * 0.8); g.restore();
-
+    g.fillRect(wm - tw - fs * 1.6, cv.height - fs * 2.3, tw + fs * 1.6, fs * 2.3);
+    g.fillStyle = '#E8C96E'; g.fillText(txt, wm - tw - fs * 0.8, cv.height - fs * 0.8); g.restore();
+  }
+  function renderConcept() {
+    var t = turfObj();
+    $('cTurf').textContent = t.label + ' (' + t.pile + ')';
+    renderTo(outCv, 1600);
     var c = calc();
     $('price').innerHTML =
       '<div><span>' + S.area + ' m² × ' + money(c.rate) + ' / m²</span><span>' + money(c.sub) + '</span></div>' +
@@ -457,7 +535,7 @@
       document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
     });
   });
-  $('restart').addEventListener('click', function () { S.img = null; S.pts = []; $('file').value = ''; $('photoMsg').textContent = ''; $('photoNext').disabled = true; go('photo'); });
+  $('restart').addEventListener('click', function () { S.img = null; S.pts = []; S.mask = null; $('file').value = ''; $('photoMsg').textContent = ''; $('photoNext').disabled = true; go('photo'); });
 
   paintSize(); paintTurfs(); go('photo'); window.__ptInit = true;
 })();
