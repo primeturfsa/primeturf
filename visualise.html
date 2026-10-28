@@ -135,12 +135,21 @@
     <div class="stage"><canvas id="markCv"></canvas></div>
     <div class="row" style="margin-top:14px">
       <button class="btn" id="detect">Detect lawn</button>
+      <button class="btn ghost" id="refBtn">Set scale (estimate m²)</button>
       <button class="btn ghost" id="undo">Undo point</button>
       <button class="btn ghost" id="clear">Clear outline</button>
       <span class="note" id="ptCount">0 points</span>
     </div>
     <label class="field" style="margin-top:14px;max-width:360px"><span>Detection sensitivity</span><input id="sens" type="range" min="0" max="100" value="50" /></label>
     <p class="note" id="detMsg"></p>
+    <div id="refBox" style="display:none;margin-top:10px;padding:14px;border:1px solid #E3DED2;background:#fff">
+      <p class="note" style="margin:0 0 10px">Tap two ends of something on the ground you know the length of — a paving row, the width of the lawn's near edge, a gate or a door width. Then enter its real length.</p>
+      <div id="refForm" style="display:none;gap:10px;align-items:center;flex-wrap:wrap">
+        <label style="font-size:13px">Real length of that line (m) <input id="refM" type="number" min="0.1" step="0.1" style="width:90px;padding:10px;border:1px solid #E3DED2;margin-left:6px" /></label>
+        <button class="btn" id="refApply" type="button" style="padding:12px 20px">Estimate area</button>
+      </div>
+      <p class="note" id="refMsg" style="margin:10px 0 0"></p>
+    </div>
     <div class="row">
       <button class="btn" id="markNext">Continue</button>
       <button class="btn ghost" data-back="photo">Back</button>
@@ -244,7 +253,7 @@
   var TO_EMAIL = 'leon@primeturf.co.za', TO_WA = '27768048868';
   var ORDER = ['photo', 'mark', 'size', 'turf', 'details', 'concept'];
   var LABELS = { photo: 'Photo', mark: 'Outline', size: 'Size', turf: 'Turf', details: 'Details', concept: 'Concept' };
-  var S = { step: 'photo', img: null, pts: [], mask: null, cover: 0, area: 50, surface: 'grass', turf: 'spring', rects: [] };
+  var S = { step: 'photo', img: null, pts: [], mask: null, cover: 0, ref: [], refMode: false, area: 50, surface: 'grass', turf: 'spring', rects: [] };
   var $ = function (id) { return document.getElementById(id); };
   var money = function (n) { return 'R' + Math.round(Number(n) || 0).toLocaleString('en-ZA'); };
   var turfObj = function () { return CFG.turfs.filter(function (t) { return t.id === S.turf; })[0]; };
@@ -290,7 +299,7 @@
       var c = document.createElement('canvas');
       c.width = Math.round(im.naturalWidth * r); c.height = Math.round(im.naturalHeight * r);
       c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
-      S.img = c; S.pts = []; S.mask = null;
+      S.img = c; S.pts = []; S.mask = null; S.ref = [];
       URL.revokeObjectURL(url);
       $('photoMsg').textContent = 'Photo ready: ' + f.name;
       $('photoNext').disabled = false;
@@ -322,15 +331,26 @@
       g.lineWidth = u * 0.6; g.strokeStyle = '#E8C96E'; g.stroke();
       S.pts.forEach(function (p) { g.beginPath(); g.arc(p[0], p[1], u, 0, 7); g.fillStyle = '#0B3D2E'; g.fill(); g.lineWidth = u * 0.5; g.strokeStyle = '#E8C96E'; g.stroke(); });
     }
+    if (S.ref.length) {
+      g.strokeStyle = '#4ADE80'; g.fillStyle = '#4ADE80'; g.lineWidth = u * 0.6;
+      g.beginPath(); S.ref.forEach(function (p, i) { i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]); }); g.stroke();
+      S.ref.forEach(function (p) { g.beginPath(); g.arc(p[0], p[1], u, 0, 7); g.fill(); });
+    }
     $('ptCount').textContent = S.pts.length + (S.pts.length === 1 ? ' point' : ' points');
   }
   markCv.addEventListener('click', function (e) {
     var r = markCv.getBoundingClientRect();
+    if (S.refMode) {
+      if (S.ref.length >= 2) S.ref = [];
+      S.ref.push([(e.clientX - r.left) * markCv.width / r.width, (e.clientY - r.top) * markCv.height / r.height]);
+      $('refForm').style.display = S.ref.length === 2 ? 'flex' : 'none';
+      drawMark(); return;
+    }
     S.mask = null; $('detMsg').textContent = ''; S.pts.push([(e.clientX - r.left) * markCv.width / r.width, (e.clientY - r.top) * markCv.height / r.height]);
     drawMark();
   });
   $('undo').addEventListener('click', function () { S.pts.pop(); drawMark(); });
-  $('clear').addEventListener('click', function () { S.pts = []; S.mask = null; $('detMsg').textContent = ''; drawMark(); });
+  $('clear').addEventListener('click', function () { S.ref = []; $('refForm').style.display = 'none'; S.pts = []; S.mask = null; $('detMsg').textContent = ''; drawMark(); });
   $('markNext').addEventListener('click', function () { go('size'); });
 
   /* ---------- automatic lawn detection (runs in the browser) ---------- */
@@ -382,6 +402,38 @@
     drawMark();
   }
   $('detect').addEventListener('click', runDetect);
+  $('refBtn').addEventListener('click', function () {
+    S.refMode = !S.refMode; $('refBox').style.display = S.refMode ? 'block' : 'none';
+    this.textContent = S.refMode ? 'Back to outlining' : 'Set scale (estimate m²)';
+  });
+  /* Rough ground-plane area from the lawn mask and one known length.
+     Assumes a typical phone lens (f ≈ 0.8 × width) and a horizon about a third down the frame. */
+  function estimateArea() {
+    var W = 360, H = Math.max(1, Math.round(S.img.height * W / S.img.width)), k = W / S.img.width;
+    var m = lawnMask(W, H), d = m.getContext('2d').getImageData(0, 0, W, H).data;
+    var f = 0.8 * W, yh = 0.35 * H, top = -1, y0, x0;
+    for (y0 = 0; y0 < H && top < 0; y0++) for (x0 = 0; x0 < W; x0 += 2) if (d[(y0 * W + x0) * 4 + 3] > 128) { top = y0; break; }
+    if (top < 0) return null;
+    yh = Math.min(yh, top - 0.12 * H);      // the far edge of the lawn must sit well below the horizon
+    var a = S.ref[0], b = S.ref[1], Lp = Math.hypot((a[0] - b[0]) * k, (a[1] - b[1]) * k), yr = Math.max(yh + H * 0.05, (a[1] + b[1]) / 2 * k);
+    var Lm = +$('refM').value;
+    if (!(Lm > 0) || Lp < 4) return null;
+    var h = Lm / Lp * (yr - yh), A = 0, px = 0;
+    for (var y = Math.max(0, Math.ceil(yh + H * 0.02)); y < H; y++) {
+      var w = 0; for (var x = 0; x < W; x++) if (d[(y * W + x) * 4 + 3] > 128) w++;
+      A += f * h * h * w / Math.pow(y - yh, 3);
+    }
+    for (var i = 3; i < d.length; i += 4) if (d[i] > 128) px++;
+    var flat = px * Math.pow(Lm / Lp, 2);     // no perspective: a safe lower figure
+    return (flat + Math.min(A, 2 * flat)) / 2; // perspective model, bounded so a bad guess can't run away
+  }
+  $('refApply').addEventListener('click', function () {
+    var A = estimateArea();
+    if (!A || !isFinite(A)) { $('refMsg').textContent = 'Please mark two points further apart and enter the real length.'; return; }
+    var v = Math.max(1, Math.round(A / 5) * 5 || Math.round(A));
+    S.area = v; $('area').value = v; S.rects = []; paintRects(); paintSize();
+    $('refMsg').textContent = 'Estimated about ' + v + ' m² (realistically between ' + Math.round(v * 0.7) + ' and ' + Math.round(v * 1.35) + ' m²). This is carried to the next step — you can change it, and we confirm it on a free site measure.';
+  });
   $('sens').addEventListener('input', function () { runDetect(); });
 
   /* ---------- 3 size ---------- */
@@ -535,7 +587,7 @@
       document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
     });
   });
-  $('restart').addEventListener('click', function () { S.img = null; S.pts = []; S.mask = null; $('file').value = ''; $('photoMsg').textContent = ''; $('photoNext').disabled = true; go('photo'); });
+  $('restart').addEventListener('click', function () { S.ref = []; S.refMode = false; $('refBox').style.display = 'none'; S.img = null; S.pts = []; S.mask = null; $('file').value = ''; $('photoMsg').textContent = ''; $('photoNext').disabled = true; go('photo'); });
 
   paintSize(); paintTurfs(); go('photo'); window.__ptInit = true;
 })();
