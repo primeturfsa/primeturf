@@ -531,6 +531,14 @@
     }
     return m;
   }
+  function grayShade(w, h) {
+    var c = document.createElement('canvas'); c.width = w; c.height = h;
+    var g = c.getContext('2d'); g.drawImage(S.img, 0, 0, w, h);
+    var im = g.getImageData(0, 0, w, h), d = im.data;
+    for (var i = 0; i < d.length; i += 4) { var l = d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11; d[i] = d[i + 1] = d[i + 2] = 128 + (l - 128) * 0.8; }
+    g.putImageData(im, 0, 0);
+    return c;
+  }
   function renderTo(cv, maxW) {
     var t = turfObj(), g = cv.getContext('2d');
     if (S.img) {
@@ -540,11 +548,11 @@
       var layer = document.createElement('canvas'); layer.width = w; layer.height = h;
       var lg = layer.getContext('2d');
       turfFill(lg, w, h, 0, 0, t, false);
+      var gray = grayShade(w, h);                                                           // the photo's light and shadow, colour removed
+      lg.globalCompositeOperation = 'soft-light'; lg.drawImage(gray, 0, 0);
       lg.globalCompositeOperation = 'destination-in'; lg.drawImage(lawnMask(w, h), 0, 0);   // turf only where the lawn is
-      lg.globalCompositeOperation = 'source-atop'; lg.globalAlpha = 0.7;
-      lg.drawImage(S.img, 0, 0, w, h);                                                      // keep the photo's light and shadow
-      lg.globalAlpha = 1; lg.globalCompositeOperation = 'source-over';
-      g.save(); g.globalAlpha = 0.9; g.drawImage(layer, 0, 0); g.restore();
+      lg.globalCompositeOperation = 'source-over';
+      g.drawImage(layer, 0, 0);
     } else {
       cv.width = 1200; cv.height = 800;
       sampleScene(g, 1200, 800, t);
