@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="./support.js"></script>
+<script src="./forms.js" defer></script>
 <title>Contact PrimeTurf | Artificial Grass Quotes in Gauteng</title>
 <meta name="description" content="Call, email or WhatsApp PrimeTurf for a free site assessment and a fixed written quote for artificial grass installation." />
 <meta property="og:type" content="website" />
@@ -129,36 +130,36 @@
 
 <div style="max-width:1280px;margin:0 auto;padding:clamp(40px,5vw,72px) clamp(20px,4vw,48px) clamp(56px,7vw,100px);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:clamp(32px,5vw,72px);align-items:start">
 
-  <div style="min-width:0">
+  <div style="min-width:0" data-pt-contact>
     <h2 style="margin:0 0 8px;font-family:'Cormorant Garamond',Georgia,serif;font-weight:300;font-size:clamp(26px,3vw,36px);color:#0B3D2E">Send us a message</h2>
     <p style="margin:0 0 32px;font-size:15px;color:#7A7670">We usually respond within 24 hours.</p>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:20px">
       <label style="display:block">
         <span style="display:block;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#7A7670;margin-bottom:9px">Full name</span>
-        <input type="text" placeholder="Jane Botha" style="width:100%;border:1px solid #E3DED2;background:#FFFFFF;padding:15px;font-size:16px;color:#0B3D2E;outline:none;border-radius:2px" />
+        <input name="name" type="text" placeholder="Jane Botha" style="width:100%;border:1px solid #E3DED2;background:#FFFFFF;padding:15px;font-size:16px;color:#0B3D2E;outline:none;border-radius:2px" />
       </label>
       <label style="display:block">
         <span style="display:block;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#7A7670;margin-bottom:9px">Mobile</span>
-        <input type="tel" placeholder="082 000 0000" style="width:100%;border:1px solid #E3DED2;background:#FFFFFF;padding:15px;font-size:16px;color:#0B3D2E;outline:none;border-radius:2px" />
+        <input name="phone" type="tel" placeholder="082 000 0000" style="width:100%;border:1px solid #E3DED2;background:#FFFFFF;padding:15px;font-size:16px;color:#0B3D2E;outline:none;border-radius:2px" />
       </label>
       <label style="display:block">
         <span style="display:block;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#7A7670;margin-bottom:9px">Email</span>
-        <input type="email" placeholder="jane@example.co.za" style="width:100%;border:1px solid #E3DED2;background:#FFFFFF;padding:15px;font-size:16px;color:#0B3D2E;outline:none;border-radius:2px" />
+        <input name="email" type="email" placeholder="jane@example.co.za" style="width:100%;border:1px solid #E3DED2;background:#FFFFFF;padding:15px;font-size:16px;color:#0B3D2E;outline:none;border-radius:2px" />
       </label>
       <label style="display:block">
         <span style="display:block;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#7A7670;margin-bottom:9px">Suburb</span>
-        <input type="text" placeholder="Bryanston" style="width:100%;border:1px solid #E3DED2;background:#FFFFFF;padding:15px;font-size:16px;color:#0B3D2E;outline:none;border-radius:2px" />
+        <input name="suburb" type="text" placeholder="Bryanston" style="width:100%;border:1px solid #E3DED2;background:#FFFFFF;padding:15px;font-size:16px;color:#0B3D2E;outline:none;border-radius:2px" />
       </label>
     </div>
     <label style="display:block;margin-top:20px">
       <span style="display:block;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#7A7670;margin-bottom:9px">Approximate area</span>
-      <input type="text" placeholder="e.g. 80m² back lawn" style="width:100%;border:1px solid #E3DED2;background:#FFFFFF;padding:15px;font-size:16px;color:#0B3D2E;outline:none;border-radius:2px" />
+      <input name="size" type="text" placeholder="e.g. 80m² back lawn" style="width:100%;border:1px solid #E3DED2;background:#FFFFFF;padding:15px;font-size:16px;color:#0B3D2E;outline:none;border-radius:2px" />
     </label>
     <label style="display:block;margin-top:20px">
       <span style="display:block;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#7A7670;margin-bottom:9px">How can we help?</span>
-      <textarea rows="5" placeholder="Tell us about the site — access, slopes, existing lawn, estate approval requirements…" style="width:100%;border:1px solid #E3DED2;background:#FFFFFF;padding:15px;font-size:16px;color:#0B3D2E;outline:none;border-radius:2px;resize:vertical"></textarea>
+      <textarea name="message" rows="5" placeholder="Tell us about the site — access, slopes, existing lawn, estate approval requirements…" style="width:100%;border:1px solid #E3DED2;background:#FFFFFF;padding:15px;font-size:16px;color:#0B3D2E;outline:none;border-radius:2px;resize:vertical"></textarea>
     </label>
-    <button type="button" style="margin-top:26px;background:#0B3D2E;color:#FAF8F2;font-size:13px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;padding:18px 34px;border:none;border-radius:2px;cursor:pointer" style-hover="background:#C9A44A;color:#070E09">Send message</button>
+    <button type="button" data-pt-contact-send style="margin-top:26px;background:#0B3D2E;color:#FAF8F2;font-size:13px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;padding:18px 34px;border:none;border-radius:2px;cursor:pointer" style-hover="background:#C9A44A;color:#070E09">Send message</button>
     <p style="margin:18px 0 0;font-size:13px;line-height:1.6;color:#7A7670">Prefer an instant number? The <a href="./quote">estimator</a> gives you a price range in about a minute.</p>
   </div>
 

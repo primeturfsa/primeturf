@@ -63,6 +63,7 @@
   .price .t { border-top:1px solid #E3DED2; margin-top:6px; padding-top:12px; font-weight:600; }
 </style>
 <script src="./nav-drawer.js" defer></script>
+<script src="./forms.js" defer></script>
 </head>
 <body>
 <div style="max-width:100%;overflow-x:hidden">
@@ -207,11 +208,12 @@
     <div class="price" id="price"></div>
     <div class="row" style="margin-top:0">
       <button class="btn wa" id="sendWa">Send quote via WhatsApp</button>
-      <button class="btn" id="sendMail">Send via email</button>
+      <button class="btn" id="sendMail">Send my quote</button>
       <button class="btn ghost" id="dl">Download concept image</button>
       <button class="btn ghost" id="restart">Start again</button>
     </div>
-    <p class="note" style="margin-top:12px">Tip: download the image and attach it in WhatsApp or email — messages can't carry it automatically.</p>
+    <p class="note" id="sendNote" style="margin-top:12px;color:#8A6B20"></p>
+    <p class="note" style="margin-top:6px">Tip: download the image and attach it in WhatsApp or email — messages can't carry it automatically.</p>
   </section>
 
   <div class="live" id="live"><span>Indicative so far (incl. VAT)</span><b id="liveTotal">—</b></div>
@@ -618,8 +620,14 @@
       'Photo supplied: ' + (S.img ? 'yes (I will send it)' : 'no'),
       $('notes').value.trim() ? 'Notes: ' + $('notes').value.trim() : ''].filter(Boolean).join('\n');
   }
-  $('sendWa').addEventListener('click', function () { window.open('https://wa.me/' + TO_WA + '?text=' + encodeURIComponent(message()), '_blank'); });
-  $('sendMail').addEventListener('click', function () { window.location.href = 'mailto:' + TO_EMAIL + '?subject=' + encodeURIComponent('Visualise estimate') + '&body=' + encodeURIComponent(message()); });
+  $('sendWa').addEventListener('click', function () { window.ptSubmit({ subject: 'Visualise estimate (WhatsApp) — ' + $('name').value.trim(), name: $('name').value.trim(), email: $('email').value.trim(), phone: $('phone').value.trim(), message: message() }); window.open('https://wa.me/' + TO_WA + '?text=' + encodeURIComponent(message()), '_blank'); });
+  $('sendMail').addEventListener('click', function () {
+    var b = this, label = b.textContent; b.disabled = true; b.textContent = 'Sending…';
+    window.ptSubmit({ subject: 'Visualise estimate — ' + $('name').value.trim(), name: $('name').value.trim(), email: $('email').value.trim(), phone: $('phone').value.trim(), message: message() }).then(function (ok) {
+      b.disabled = false; b.textContent = label;
+      $('sendNote').textContent = ok ? 'Sent — PrimeTurf has your estimate and will be in touch.' : 'That did not send. Please use WhatsApp, or email leon@primeturf.co.za.';
+    });
+  });
   $('dl').addEventListener('click', function () {
     outCv.toBlob(function (b) {
       var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'primeturf-concept.png';
