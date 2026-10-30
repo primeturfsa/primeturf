@@ -12,7 +12,10 @@
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify(body)
-    }).then(function (r) { return r.json(); }).then(function (j) { return !!(j && j.success); }).catch(function () { return false; });
+    }).then(function (r) { return r.json(); }).then(function (j) {
+      window.ptLastError = (j && j.success) ? '' : ((j && j.message) || 'unknown response');
+      return !!(j && j.success);
+    }).catch(function (e) { window.ptLastError = 'network error: ' + (e && e.message); return false; });
   };
 
   function toast(text, ok) {
@@ -38,7 +41,7 @@
     window.ptSubmit({ subject: 'New website enquiry — ' + v.name, name: v.name, email: v.email, phone: v.phone, message: lines.join('\n') }).then(function (ok) {
       btn.disabled = false; btn.textContent = label;
       if (ok) { box.querySelectorAll('[name]').forEach(function (el) { el.value = ''; }); toast('Thank you — your message has been sent. We usually reply within 24 hours.', true); }
-      else toast('Sorry, that did not send. Please WhatsApp us on 076 804 8868 or email leon@primeturf.co.za.', false);
+      else toast('Sorry, that did not send (' + (window.ptLastError || 'error') + '). Please WhatsApp us on 076 804 8868 or email leon@primeturf.co.za.', false);
     });
   });
 })();
