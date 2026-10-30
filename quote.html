@@ -53,6 +53,7 @@
   @keyframes ptMarquee { to { transform:translateX(-50%); } }
 </style>
 <script src="./nav-drawer.js" defer></script>
+<script src="./forms.js" defer></script>
 </helmet>
 
 <template id="__bundler_thumbnail">
@@ -211,7 +212,7 @@
         </div>
         <div style="margin-top:26px;display:flex;flex-wrap:wrap;gap:14px;align-items:center">
           <button type="button" onClick="{{ sendWhatsapp }}" style="background:#1A9E4A;color:#FFFFFF;font-size:13px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;padding:17px 30px;border-radius:2px;cursor:pointer;border:none" style-hover="background:#15803D">Send via WhatsApp</button>
-          <button type="button" onClick="{{ sendEmail }}" style="background:#0B3D2E;color:#FAF8F2;font-size:13px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;padding:17px 30px;border-radius:2px;cursor:pointer;border:none" style-hover="background:#C9A44A;color:#070E09">Send via email</button>
+          <button type="button" onClick="{{ sendEmail }}" style="background:#0B3D2E;color:#FAF8F2;font-size:13px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;padding:17px 30px;border-radius:2px;cursor:pointer;border:none" style-hover="background:#C9A44A;color:#070E09">Send my quote</button>
           <span style="font-size:14px;color:{{ hintInk }};flex-basis:100%">{{ hint }}</span>
         </div>
       </div>
@@ -219,7 +220,7 @@
     <sc-if value="{{ sent }}" hint-placeholder-val="{{ false }}">
       <div style="border:1px solid #0B3D2E;background:#FFFFFF;padding:clamp(24px,4vw,36px);border-radius:2px">
         <p style="margin:0 0 10px;font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:#8A6B20">Almost done</p>
-        <p style="margin:0 0 22px;font-size:16px;line-height:1.7;color:#0B3D2E;text-wrap:pretty">Thank you. Once you press send in {{ sentVia }}, your {{ total }} estimate reaches PrimeTurf. We'll reply to {{ sentTo }} to arrange a free site measure.</p>
+        <p style="margin:0 0 22px;font-size:16px;line-height:1.7;color:#0B3D2E;text-wrap:pretty">Thank you. {{ sentNote }} We'll reply to {{ sentTo }} to arrange a free site measure.</p>
         <button type="button" onClick="{{ restart }}" style="border:1px solid #E3DED2;background:transparent;color:#070E09;font-size:13px;font-weight:500;letter-spacing:0.09em;text-transform:uppercase;padding:15px 26px;border-radius:2px;cursor:pointer">Price another area</button>
       </div>
     </sc-if>
@@ -266,11 +267,19 @@ class Component extends DCLogic {
 
   dispatch(via, ok, msg) {
     if (!ok) return this.setState({ tried: true });
-    const url = via === 'wa'
-      ? 'https://wa.me/' + TO_WA + '?text=' + encodeURIComponent(msg)
-      : 'mailto:' + TO_EMAIL + '?subject=' + encodeURIComponent('Artificial grass estimate') + '&body=' + encodeURIComponent(msg);
-    if (via === 'wa') window.open(url, '_blank'); else window.location.href = url;
-    this.setState({ sent: true, via });
+    const st = this.state, email = /\S+@\S+\.\S+/.test(st.email) ? st.email : '';
+    // every estimate is emailed to PrimeTurf, whichever button was used
+    const mail = window.ptSubmit ? window.ptSubmit({ subject: 'Website quote estimate', name: 'Quote calculator lead', email, phone: st.whatsapp, message: msg }) : Promise.resolve(false);
+    if (via === 'wa') {
+      window.open('https://wa.me/' + TO_WA + '?text=' + encodeURIComponent(msg), '_blank');
+      this.setState({ sent: true, via });
+      return;
+    }
+    mail.then(sent => {
+      if (sent) return this.setState({ sent: true, via: 'email' });
+      window.location.href = 'mailto:' + TO_EMAIL + '?subject=' + encodeURIComponent('Artificial grass estimate') + '&body=' + encodeURIComponent(msg);
+      this.setState({ sent: true, via: 'mailto' });
+    });
   }
 
   money(n) { return 'R' + Math.round(Number(n) || 0).toLocaleString('en-ZA'); }
@@ -313,7 +322,7 @@ class Component extends DCLogic {
       hintInk: st.tried && !ok ? '#A3342B' : '#7A7670',
       sendWhatsapp: () => this.dispatch('wa', ok, msg),
       sendEmail: () => this.dispatch('email', ok, msg),
-      sentVia: st.via === 'wa' ? 'WhatsApp' : 'your email app',
+      sentNote: st.via === 'wa' ? 'Press send in WhatsApp to deliver your ' + this.money(total) + ' estimate; a copy has also been emailed to PrimeTurf.' : st.via === 'email' ? 'Your ' + this.money(total) + ' estimate has been sent to PrimeTurf.' : 'Press send in your email app to deliver your ' + this.money(total) + ' estimate.',
       sent: st.sent, notSent: !st.sent,
       sentTo: [st.email, st.whatsapp].filter(Boolean).join(' and '),
       restart: () => this.setState({ sent: false, tried: false })
