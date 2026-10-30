@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Page not found | PrimeTurf</title>
+<meta name="robots" content="noindex" />
+<script>
+  // /page/ -> /page (the site's real addresses have no trailing slash)
+  (function () {
+    var p = location.pathname;
+    if (p.length > 1 && p.charAt(p.length - 1) === '/') location.replace(p.replace(/\/+$/, '') + location.search + location.hash);
+  })();
+</script>
+<style>
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0B3D2E;color:#FAF8F2;font-family:Montserrat,system-ui,sans-serif;text-align:center;padding:24px}
+  h1{font-family:'Cormorant Garamond',Georgia,serif;font-weight:300;font-size:clamp(32px,6vw,56px);margin:0 0 12px}
+  p{margin:0 0 24px;color:rgba(250,248,242,.75)}
+  a{display:inline-block;background:#C9A44A;color:#0B3D2E;text-decoration:none;font-size:13px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;padding:16px 28px;border-radius:2px;margin:4px}
+</style>
+</head>
+<body>
+<div>
+  <h1>We couldn't find that page</h1>
+  <p>It may have moved. Try the home page or get an instant quote.</p>
+  <a href="https://www.primeturf.co.za/">Home</a><a href="https://www.primeturf.co.za/quote">Get a quote</a>
+</div>
+</body>
+</html>
