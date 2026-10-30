@@ -2,7 +2,7 @@
    The access key is public by design (Web3Forms keys are meant for client-side use). */
 (function () {
   var ENDPOINT = 'https://api.web3forms.com/submit';
-  var KEY = '9923a61d-593b-4551-bd12-ce9c1a3933b7';
+  var KEY = '233e4c95-dad1-410a-a690-74ffe1a04bba';
 
   // fields: { name, email, phone, message, subject } -> Promise<boolean>
   window.ptSubmit = function (fields) {
