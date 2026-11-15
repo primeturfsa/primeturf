@@ -1,0 +1,287 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>PrimeTurf Intelligence Report</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: sales-ops briefing. Verdict and call sheet first, evidence and run log after. */
+:root{
+  --bg:#f5f6f2; --surface:#ffffff; --fg:#1b2420; --muted:#5b6862; --line:#d9ded8;
+  --turf:#1f6b46; --turf-soft:#e3efe8; --warn:#b4570a; --warn-soft:#fbeedd; --bad:#a4262c; --bad-soft:#f9e5e5; --info:#2b5f8a; --info-soft:#e4edf5;
+  --display:"Space Grotesk",system-ui,sans-serif; --body:Inter,system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121815; --surface:#1a221e; --fg:#e8eee9; --muted:#9aa8a0; --line:#2c3832;
+  --turf:#5fbf8a; --turf-soft:#1c2f25; --warn:#e8a15c; --warn-soft:#33261a; --bad:#ee8b8f; --bad-soft:#3a1f21; --info:#86b6df; --info-soft:#1c2a38; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121815; --surface:#1a221e; --fg:#e8eee9; --muted:#9aa8a0; --line:#2c3832;
+  --turf:#5fbf8a; --turf-soft:#1c2f25; --warn:#e8a15c; --warn-soft:#33261a; --bad:#ee8b8f; --bad-soft:#3a1f21; --info:#86b6df; --info-soft:#1c2a38; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.55}
+.wrap{max-width:1040px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);line-height:1.2;text-wrap:balance;margin:0}
+h1{font-size:clamp(26px,5vw,38px);letter-spacing:-.01em}
+h2{font-size:22px;margin-top:44px;padding-top:20px;border-top:1px solid var(--line)}
+h3{font-size:16px;margin-top:22px}
+p{margin:8px 0;max-width:72ch}
+a{color:var(--turf)}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.sub{color:var(--muted);max-width:70ch}
+.verdict{background:var(--warn-soft);border:1px solid var(--warn);border-radius:8px;padding:14px 16px;margin-top:18px}
+.verdict b{color:var(--warn)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:18px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.kpi .n{font-family:var(--display);font-size:28px;font-weight:700;font-variant-numeric:tabular-nums}
+.kpi .l{font-size:12.5px;color:var(--muted)}
+.kpi.bad .n{color:var(--bad)} .kpi.ok .n{color:var(--turf)}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface);margin-top:12px}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:13.5px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.pill{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.p-ok{background:var(--turf-soft);color:var(--turf)} .p-warn{background:var(--warn-soft);color:var(--warn)}
+.p-bad{background:var(--bad-soft);color:var(--bad)} .p-info{background:var(--info-soft);color:var(--info)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:12px;margin-top:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;min-width:0}
+.card h3{margin-top:0}
+.kv{display:grid;grid-template-columns:110px 1fr;gap:4px 10px;font-size:13.5px;margin-top:10px}
+.kv dt{color:var(--muted)} .kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.script{background:var(--bg);border:1px solid var(--line);border-left:3px solid var(--turf);border-radius:6px;padding:10px 12px;font-size:13.5px;margin-top:8px;white-space:pre-wrap}
+button.copy{font:inherit;font-size:12px;margin-top:6px;padding:3px 10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:6px;cursor:pointer}
+button.copy:focus-visible,a:focus-visible{outline:2px solid var(--turf);outline-offset:2px}
+ul{padding-left:20px;margin:8px 0} li{margin:3px 0;max-width:72ch}
+.legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+code{font-size:12.5px;background:var(--bg);padding:1px 5px;border-radius:4px}
+.small{font-size:12.5px;color:var(--muted)}
+</style>
+
+<div class="wrap">
+<div class="eyebrow">Business intelligence report · prepared 15 Nov 2026 · CRM data last logged 26 Oct 2026</div>
+<h1>PrimeTurf Intelligence Report</h1>
+<p class="sub">Summary of every InsightForge run from 30 Sep to 26 Oct 2026, the full CRM contents, and a call sheet to start working the prospects. Prepared for Stiaan.</p>
+
+<div class="verdict"><b>Bottom line.</b> After about four weeks of daily runs the CRM holds 3 developers and 2 opportunities, all scored NURTURE (50 to 60). Nothing reaches the 70-point qualified bar, no decision-maker has been named at any company, and no contact or interaction has been recorded. The strongest live hook is Cape Town water, and it is still conditional: no restriction had been announced in anything I could find as of today. Calling can start with one switchboard call to CP Construction (section 2). The rest needs a few hours of manual research first.</div>
+
+<div class="kpis">
+<div class="kpi"><div class="n">3</div><div class="l">Companies in CRM</div></div>
+<div class="kpi"><div class="n">2</div><div class="l">Opportunities (both NURTURE)</div></div>
+<div class="kpi bad"><div class="n">0</div><div class="l">Scored 70+ (qualified)</div></div>
+<div class="kpi bad"><div class="n">0</div><div class="l">Named decision-makers</div></div>
+<div class="kpi"><div class="n">0</div><div class="l">Contacts / interactions logged</div></div>
+<div class="kpi"><div class="n">41</div><div class="l">Intelligence records</div></div>
+<div class="kpi"><div class="n">20</div><div class="l">Sources logged</div></div>
+<div class="kpi bad"><div class="n">6 of 6</div><div class="l">Tasks past due, none started</div></div>
+</div>
+
+<div class="legend small">Evidence labels used throughout:
+<span class="pill p-ok">VERIFIED FACT</span><span class="pill p-info">PUBLIC CLAIM</span><span class="pill p-warn">INFERENCE / ESTIMATE</span><span class="pill p-bad">UNVERIFIED</span><span class="pill">UNKNOWN</span></div>
+
+<h2>1. Prospect comparison</h2>
+<p>All three are developers, so each is a potential buyer for common-area landscaping and possibly a repeat or referral source (BOTH is an inference). None has an evidenced turf requirement. Scores follow the 100-point model: signal 25, potential 20, geography 15, decision-maker access 15, timing 10, strategic value 10, brand fit 5.</p>
+<div class="tw"><table>
+<thead><tr><th>Company</th><th>Region</th><th class="num">Score</th><th>Signal</th><th>Decision-maker</th><th>Public contact</th><th>Timing</th><th>Stage</th></tr></thead>
+<tbody>
+<tr><td><b>CP Construction</b><br><span class="small">Cape Projects Construction</span></td><td>Western Cape<br><span class="small">sites UNKNOWN</span></td><td class="num"><b>60</b></td>
+<td>3 launches in 2026: Stonecrest (1 Sep, 77 homes), Somerset Village (1 Oct, 272 apartments), Valedrift Village (1 Nov, 155 homes). 504 homes. <span class="pill p-info">PUBLIC CLAIM</span> Landscaping need is only an inference.</td>
+<td><span class="pill p-bad">None found</span></td><td>+27 21 919 9944<br>info@cpconstruction.co.za</td><td>Launch window now; landscaping usually late phase</td><td>Discovered</td></tr>
+<tr><td><b>The Charles</b><br><span class="small">UNIR Projects / IGUAL Property Group / 181 DevCo JV</span></td><td>Somerset West<br><span class="small">Lord Charles Estate</span></td><td class="num"><b>55</b></td>
+<td>R1bn+ development, 178 apartments in phase 1, landscaped courtyard, central pool and penthouse terraces. Launched 18 Mar 2026, completion projected Q3 2028. <span class="pill p-info">PUBLIC CLAIM</span></td>
+<td><span class="pill p-bad">None found</span><br><span class="small">Architects named: GLH</span></td><td>UNKNOWN (no website, email or phone)</td><td>Landscaping likely late 2027 to 2028 <span class="pill p-warn">INFERENCE</span></td><td>Verified</td></tr>
+<tr><td><b>Central Developments</b><br><span class="small">Kings Walk Estates</span></td><td>Pretoria East</td><td class="num"><b>50</b></td>
+<td>Kings Walk launched Feb 2026 with a park, play area and jogging trails. Source is sponsored content. <span class="pill p-info">PUBLIC CLAIM</span> No evidence turf is specified.</td>
+<td><span class="pill p-bad">None found</span></td><td>UNKNOWN</td><td>UNKNOWN</td><td>Discovered</td></tr>
+</tbody></table></div>
+
+<h3>Score breakdown (as recorded in the CRM)</h3>
+<div class="tw"><table>
+<thead><tr><th>Criterion (weight)</th><th class="num">CP Construction</th><th class="num">The Charles</th><th>Why the score is low</th></tr></thead>
+<tbody>
+<tr><td>Buying signal (25)</td><td class="num">10</td><td class="num">12</td><td>Real projects, but no turf enquiry, landscaper appointment or tender found for either</td></tr>
+<tr><td>Commercial potential (20)</td><td class="num">12</td><td class="num">10</td><td>Turf area and value UNKNOWN for both</td></tr>
+<tr><td>Geography fit (15)</td><td class="num">14</td><td class="num">14</td><td>Both in priority Western Cape zones</td></tr>
+<tr><td>Decision-maker access (15)</td><td class="num">5</td><td class="num">6</td><td>No named contact. This is the biggest gap.</td></tr>
+<tr><td>Timing (10)</td><td class="num">8</td><td class="num">3</td><td>The Charles landscaping is probably 2027 to 2028</td></tr>
+<tr><td>Strategic / referral (10)</td><td class="num">7</td><td class="num">6</td><td>Repeat developers, possible referral channel</td></tr>
+<tr><td>Brand fit (5)</td><td class="num">4</td><td class="num">4</td><td></td></tr>
+<tr><td><b>Total</b></td><td class="num"><b>60</b></td><td class="num"><b>55</b></td><td>NURTURE is 50 to 69. QUALIFIED starts at 70.</td></tr>
+</tbody></table></div>
+<p class="small">No score breakdown was recorded for Central Developments (50). Estimated m² and project value are UNKNOWN for all opportunities. No pipeline value can be stated without inventing a number.</p>
+
+<h2>2. Call sheet</h2>
+<p>None of these prospects is ready for a sales pitch, because nobody has been identified who buys landscaping. The calls below are research calls: find the right person, then ask for a short conversation. All wording is a draft for your approval. It references only what the companies have published.</p>
+
+<div class="cards">
+<div class="card">
+<h3>1. CP Construction <span class="pill p-ok">Call first</span></h3>
+<dl class="kv"><dt>Goal</dt><dd>Learn who runs development or project management and who appoints the landscaper</dd>
+<dt>Number</dt><dd>+27 21 919 9944 (switchboard, from company site)</dd>
+<dt>Ask for</dt><dd>Development manager or project manager for Somerset Village / Valedrift Village</dd>
+<dt>Do not</dt><dd>Email the generic info@ address cold; claim any relationship; claim water restrictions are in force</dd>
+<dt>Best timing</dt><dd>Now. Valedrift launched 1 Nov, so show-house and landscaping decisions may be live.</dd></dl>
+<div class="script" id="s1">Hi, this is Stiaan from PrimeTurf. We install premium artificial lawns in the Western Cape. I saw on your website that you've launched Stonecrest, Somerset Village and Valedrift Village this year. Could you tell me who looks after the landscaping for those developments, so I can send them a short introduction? I'm not selling anything on this call.</div>
+<button class="copy" data-t="s1">Copy script</button>
+<p class="small">Suggested follow-up once a name is given: ask for their direct email or WhatsApp, then offer a 15-minute conversation. Log the call in the Interactions database.</p>
+</div>
+
+<div class="card">
+<h3>2. The Charles <span class="pill p-warn">Research first</span></h3>
+<dl class="kv"><dt>Goal</dt><dd>Identify the landscape architect or contractor and the developer's project manager</dd>
+<dt>Number</dt><dd>UNKNOWN. Look for the sales office or the developer JV (UNIR Projects, IGUAL Property Group, 181 DevCo) and GLH Architects.</dd>
+<dt>Best timing</dt><dd>Research now. Real approach in Q1 2027, when construction progress can be checked.</dd>
+<dt>Why wait</dt><dd>Landscaping is likely 2027 to 2028. Calling early adds no value without a named contact.</dd></dl>
+<div class="script" id="s2">Hi, this is Stiaan from PrimeTurf. I'm following the Charles development in Somerset West. Could you tell me who is handling the landscaping and pool-deck work for the courtyard and terraces, so I can introduce our low-water artificial lawn range at the right time?</div>
+<button class="copy" data-t="s2">Copy script</button>
+</div>
+
+<div class="card">
+<h3>3. Central Developments <span class="pill p-warn">Research first</span></h3>
+<dl class="kv"><dt>Goal</dt><dd>Find the project manager for Kings Walk Estates and who appoints the landscaper for the park and play area</dd>
+<dt>Number</dt><dd>UNKNOWN. Check the company site (centraldevelopments.co.za) and the sales office.</dd>
+<dt>Best timing</dt><dd>After a named contact is found. Task was due 23 Oct.</dd>
+<dt>Note</dt><dd>Gauteng, so the Johannesburg Level 1 notice (verified) is the only safe water hook. Do not quote Level 2.</dd></dl>
+<div class="script" id="s3">Hi, this is Stiaan from PrimeTurf. I saw that Kings Walk Estates has a park and kids' play area as part of the development. Who handles the landscaping for the common areas, so I can send them a short introduction on low-water, low-maintenance turf?</div>
+<button class="copy" data-t="s3">Copy script</button>
+</div>
+</div>
+
+<h3>Email draft, to send only after a named person is found</h3>
+<div class="script" id="s4">Subject: Low-water lawn option for [development name]
+
+Hi [name],
+
+I'm Stiaan at PrimeTurf. We supply and install premium artificial lawns in [Cape Town / Gauteng]. I saw that [development] is [published detail, e.g. "launching Valedrift Village with 155 homes"], and wanted to ask who decides on the communal landscaping.
+
+If lawn areas are in scope, a zero-irrigation option may help with running costs and water rules. Would a 15-minute call or a short site assessment be useful?
+
+Regards,
+Stiaan
+PrimeTurf</div>
+<button class="copy" data-t="s4">Copy draft</button>
+<p class="small">Replace the bracketed parts with verified facts before sending. Water wording has two versions below.</p>
+
+<h3>Water line, two versions</h3>
+<div class="script" id="s5">If restrictions are announced: "With the City's new water restrictions, many communal lawns will be hard to keep green. We install artificial lawns that need no irrigation."
+
+If not announced: "Dam levels are lower than last year, and many estates are planning ahead for summer water use. A zero-irrigation lawn is one way to cut that exposure."</div>
+<button class="copy" data-t="s5">Copy both</button>
+<p class="small">Use the first version only after an official City or national water department announcement. For Gauteng, only Johannesburg Level 1 (garden watering and pool filling banned 06:00 to 18:00, 1 Sep 2026 to 31 Mar 2027) is verified.</p>
+
+<h2>3. Water: the one live market hook</h2>
+<div class="tw"><table>
+<thead><tr><th>Date</th><th class="num">Cape Town dams</th><th>Source</th><th>Label</th></tr></thead>
+<tbody>
+<tr><td>11 Sep</td><td class="num">75.5%</td><td>EWN (fetched)</td><td><span class="pill p-ok">VERIFIED</span></td></tr>
+<tr><td>17 Sep</td><td class="num">75.8% (92% a year earlier)</td><td>EWN: City decision due end Oct</td><td><span class="pill p-ok">VERIFIED</span></td></tr>
+<tr><td>8 Oct</td><td class="num">75.4%</td><td>City dam page (snippet)</td><td><span class="pill p-info">PUBLIC CLAIM</span></td></tr>
+<tr><td>14 Oct</td><td class="num">74.4%</td><td>EWN (fetched): national assessment set for 2 Nov</td><td><span class="pill p-ok">VERIFIED</span></td></tr>
+<tr><td>21 Oct</td><td class="num">73.8%</td><td>City dam page (snippet)</td><td><span class="pill p-info">PUBLIC CLAIM</span></td></tr>
+<tr><td>~11 Nov</td><td class="num">71.7%</td><td>City statement, via search summary (not fetched)</td><td><span class="pill p-info">PUBLIC CLAIM</span></td></tr>
+</tbody></table></div>
+<ul>
+<li><b>Demand:</b> reported at 912 Ml/d against an 860 Ml/d target (third-party, snippet). The City asks households to cut use by at least 10%.</li>
+<li><b>Decision:</b> the national water department's annual operating analysis (2 Nov) decides whether restrictions are needed. News24 (22 Oct) reported restrictions could start as early as December. I found <b>no published outcome</b> as of today. The City's 11 Nov statement says the outcome will determine whether restrictions are imposed. Check the City and department sites directly before using the restriction version of the water line.</li>
+<li><b>Precedent:</b> in November 2025 the department approved no restrictions for the 2025/26 year.</li>
+<li><b>Gauteng:</b> Johannesburg Level 1 is verified. Rand Water issued a formal warning on 20 Oct to Johannesburg, Tshwane and Emfuleni over overuse (Briefly, snippet). No Level 2 declaration found; results for it were 2022 to 2024 and were rejected as stale.</li>
+</ul>
+
+<h2>4. Market intelligence</h2>
+<div class="cards">
+<div class="card"><h3>Pricing</h3><p>Competitors quote roughly R350 to R850/m² installed in Cape Town <span class="pill p-info">PUBLIC CLAIM</span> <span class="pill p-bad">LOW</span>. PrimeTurf's site quotes R200 to R850/m² by range. The low end sits below the market, so a mystery-shop comparison of 3 to 5 quotes is recommended before changing anything.</p></div>
+<div class="card"><h3>Competitor channel moves</h3><p>Arturf Africa, SynGrass, Synthetic Lawn and Local Pros court installers and landscapers with trade pricing or vetted networks. MightyGrass is exhibiting at Big 5 Construct SA 2026. A PrimeTurf partner offer would need to compete on warranty, install quality and lead flow, not price.</p></div>
+<div class="card"><h3>Tenders</h3><p>No open 2026 artificial-turf tender found in Gauteng or the Western Cape across all runs. Stellenbosch BSM 88/24 (R23,085, to 30 Jun 2027) is already awarded; the next round is the entry point. Public web search indexes tenders poorly, so set TenderFlow keyword alerts and check etenders.gov.za by hand.</p></div>
+<div class="card"><h3>Sports and schools</h3><p>School hockey and sports pitches are dominated by specialists (Belgotex Sport, Synsport and others). Treat as a poor fit unless PrimeTurf holds sports-grade product. Padel is similar and needs a product-fit check. Decision for Stiaan.</p></div>
+<div class="card"><h3>Hospitality watchlist</h3><p>No turf scope or named landscaper for any of these: The Granger (Green Point, R2bn, hotel and apartments), Cape Town EDITION (rooftop pool), Waterfall City hotel (Midrand, R750m), NH Johannesburg Sandton refurbishment. Create a company record only when outdoor works and a decision-maker appear.</p></div>
+<div class="card"><h3>Rejected as stale or noise</h3><p>Evergreen Lifestyle (c. 2021), Helderfontein (2022), Redwood Estate (Jan 2025), Newinbosch (2022), Beachwood (KZN), Eastway Midstream (opening Oct 2026, scope likely already contracted), Drakenzicht Paarl (status conflicting), Hudson Park astroturf (Eastern Cape, already awarded).</p></div>
+</div>
+
+<h2>5. Tasks (all past due as of 15 Nov)</h2>
+<div class="tw"><table>
+<thead><tr><th>#</th><th>Task</th><th>Owner</th><th>Due</th><th>Priority</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>5</td><td>Decide whether PrimeTurf wants a landscaper / pool-company referral programme and on what terms. No commission terms may be offered until approved.</td><td>Stiaan</td><td>14 Oct</td><td>Medium</td><td><span class="pill p-bad">Not started</span></td></tr>
+<tr><td>2</td><td>The Charles: find landscape architect or contractor and developer project manager</td><td>Stiaan</td><td>15 Oct</td><td>Low</td><td><span class="pill p-bad">Not started</span></td></tr>
+<tr><td>4</td><td>CP Construction: find the project manager and who appoints landscaping. Web search found nothing; needs LinkedIn or show-house check.</td><td>Stiaan</td><td>16 Oct</td><td>Medium</td><td><span class="pill p-bad">Not started</span></td></tr>
+<tr><td>1</td><td>Prepare Cape Town water-saving outreach and estate / body-corporate target list</td><td>Stiaan</td><td>28 Oct</td><td>High</td><td><span class="pill p-bad">Not started</span></td></tr>
+<tr><td>3</td><td>Re-check the Cape Town restriction announcement and update the Intelligence record</td><td>InsightForge</td><td>30 Oct</td><td>Medium</td><td><span class="pill p-bad">Not started</span></td></tr>
+<tr><td>6</td><td>Prepare Western Cape outreach copy for both water outcomes. Draft copy is in section 2.</td><td>Stiaan</td><td>30 Oct</td><td>High</td><td><span class="pill p-bad">Not started</span></td></tr>
+</tbody></table></div>
+<p class="small">Notion status was read on 15 Nov. Task 3 was worked in practice by the daily sweeps but not marked done. Task 4 notes were updated on 26 Oct.</p>
+
+<h2>6. Run log, 30 Sep to 26 Oct 2026</h2>
+<p>The routine ran on most days. It never found a prospect scoring 70 or higher. The CRM got 3 companies, 2 opportunities and 41 intelligence items, and every item was either water-market tracking or a rejection of a stale or unqualified signal.</p>
+<div class="tw"><table>
+<thead><tr><th>Period</th><th>What the runs did</th><th>Result</th></tr></thead>
+<tbody>
+<tr><td>30 Sep to 1 Oct<br><span class="small">Intel #1 to 9</span></td><td>Built the CRM (7 databases). Baseline sweep: Johannesburg Level 1 notice, Rand Water overuse, Stellenbosch grass contract, competitor prices, padel, NH Sandton, Cape Town water decision. Created The Charles.</td><td>1 company, 1 opportunity (55)</td></tr>
+<tr><td>4 Oct<br><span class="small">#10, 11</span></td><td>Found competitor trade programmes; rejected Evergreen as stale. Created CP Construction.</td><td>+1 company, +1 opportunity (60)</td></tr>
+<tr><td>6 to 8 Oct<br><span class="small">#12 to 18</span></td><td>Verified the Cape Town 80% rule of thumb and the 2 routes to restrictions; rejected Helderfontein, Redwood, Beachwood, Newinbosch and mis-dated "Level 5" items. Checked Eastway Midstream.</td><td>No new prospects</td></tr>
+<tr><td>9 Oct<br><span class="small">#19, 20</span></td><td>Logged Cape Town hospitality pipeline and Gauteng water ambiguity. Created Central Developments (Kings Walk).</td><td>+1 company (50)</td></tr>
+<tr><td>11 to 16 Oct<br><span class="small">#21 to 30</span></td><td>Daily water and tender sweeps. Logged Stellenbosch FC, Drakenzicht and Waterfall City as watch items only.</td><td>No new prospects. Tasks 5, 2, 4 became overdue.</td></tr>
+<tr><td>17 to 21 Oct<br><span class="small">#31 to 35</span></td><td>Found that the decision point moved to the national assessment on 2 Nov. Dams fell from 74.4% to 73.8%.</td><td>No new prospects</td></tr>
+<tr><td>22 to 26 Oct<br><span class="small">#36 to 41</span></td><td>Cape Town restrictions flagged as possible from December; Rand Water 20 Oct warning logged. 26 Oct run updated Task 4 notes and sent a notification.</td><td>No new prospects</td></tr>
+<tr><td>27 Oct to 15 Nov</td><td>No runs are recorded in the CRM for this period. Today's search is the only check since 26 Oct.</td><td>Unknown</td></tr>
+</tbody></table></div>
+
+<h2>7. Data quality and gaps</h2>
+<ul>
+<li><b>Contacts and Interactions databases are empty.</b> Nothing has been tried, so there is no response data to learn from yet.</li>
+<li><b>No named decision-makers</b> at any company. A web search surfaced a "Wynand Haywood" as founder of a Cape Projects entity; this is <span class="pill p-bad">UNVERIFIED</span> as a link to CP Construction and must not be treated as the decision-maker.</li>
+<li><b>No website, email or phone</b> for The Charles or Central Developments.</li>
+<li><b>No affiliate classes assigned.</b> No affiliate partners have been identified, because the referral programme decision (Task 5) is open. Companies marked BOTH are an inference.</li>
+<li><b>Snippet-only evidence.</b> Many intelligence records rely on search snippets that were not fetched. Several pages returned 403. Fetch before quoting any figure.</li>
+<li><b>No linked records.</b> Central Developments has no opportunity or task. Sources are not linked to companies.</li>
+<li><b>Public web search is weak for turf signals.</b> No estate, school or hotel buying signal has surfaced in four weeks. Better inputs: TenderFlow alerts, etenders.gov.za, LinkedIn, estate-agent listings, and your own enquiries.</li>
+</ul>
+
+<h2>8. Recommended next 7 days</h2>
+<ul>
+<li><b>Day 1:</b> Check the City and national water department for the outcome of the 2 Nov assessment. Pick the matching water line.</li>
+<li><b>Day 1:</b> Call the CP Construction switchboard (script above). Log the result in Interactions.</li>
+<li><b>Day 2:</b> Decide the referral-programme question (Task 5). It unlocks landscaper and pool-company targeting.</li>
+<li><b>Day 2 to 3:</b> Build the Cape Town estate and body-corporate target list (Task 1) from public estate sites and agent listings. Aim for 10 names with an estate manager or chairperson.</li>
+<li><b>Day 3:</b> Set TenderFlow alerts: artificial turf, synthetic turf, astro, for Gauteng and Western Cape.</li>
+<li><b>Day 4 to 5:</b> LinkedIn search for development managers at The Charles JV, GLH Architects and Central Developments.</li>
+<li><b>Day 7:</b> Re-run the CRM. Only records with a named decision-maker and a scoped landscaping need can move to QUALIFIED.</li>
+</ul>
+
+<h2>9. Sources and CRM</h2>
+<p>CRM home: <a href="https://app.notion.com/p/3eb35847ca00814e82cbecc76ed8de79">PrimeTurf Business Intelligence CRM (Notion)</a>. Databases: Companies, Contacts, Opportunities, Interactions, Intelligence, Sources, Tasks. Reliability is as rated in the Sources database.</p>
+<div class="tw"><table>
+<thead><tr><th>Source</th><th>Published</th><th>Reliability</th><th>Used for</th></tr></thead>
+<tbody>
+<tr><td><a href="https://www.johannesburgwater.co.za/blog/2026/09/15/level-1-water-restrictions-are-here-lets-make-every-drop-count/">Johannesburg Water, Level 1 notice</a></td><td>15 Sep 2026</td><td>HIGH</td><td>Gauteng water hook</td></tr>
+<tr><td><a href="https://www.ewn.co.za/city-of-cape-town-to-make-a-decision-in-october-over-possible-water-restrictions">EWN, Cape Town decision in October</a></td><td>17 Sep 2026</td><td>HIGH</td><td>Dam level, decision timing</td></tr>
+<tr><td><a href="https://www.ewn.co.za/2026/10/14/wc-dws-to-continue-monitoring-dam-levels-ahead-of-key-water-assessment">EWN, department monitoring ahead of assessment</a></td><td>14 Oct 2026</td><td>HIGH</td><td>2 Nov assessment, dam levels</td></tr>
+<tr><td><a href="https://www.ewn.co.za/cocts-water-supply-under-pressure-as-dam-levels-continue-to-drop/">EWN, supply under pressure</a></td><td>11 Sep 2026</td><td>HIGH</td><td>Dam level 75.5%</td></tr>
+<tr><td><a href="https://iol.co.za/capeargus/news/2026-09-16-cape-town-considers-water-restrictions-as-dam-levels-fall-to-755/">IOL Cape Argus</a></td><td>16 Sep 2026</td><td>MEDIUM</td><td>Restrictions under consideration</td></tr>
+<tr><td><a href="https://novanews.co.za/tygerburger/city-of-cape-town-says-no-need-for-water-restrictions-after-study-shows-dams-are-safe/">Tygerburger</a></td><td>16 Jan 2026</td><td>MEDIUM</td><td>80% rule of thumb (older)</td></tr>
+<tr><td><a href="https://www.dailymaverick.co.za/article/2026-02-25-somerset-wests-most-anticipated-residential-release-launches-18-march-2026/">Daily Maverick (advertorial), The Charles</a></td><td>25 Feb 2026</td><td>MEDIUM</td><td>The Charles facts</td></tr>
+<tr><td><a href="https://cpconstruction.co.za/future-projects/">CP Construction, Future Projects</a></td><td>undated</td><td>MEDIUM</td><td>Three 2026 launches, contact details</td></tr>
+<tr><td><a href="https://businesstech.co.za/news/industry-news/851523/kings-walk-estates-sets-a-new-standard-for-secure-living-in-pretoria-east/">BusinessTech (sponsored), Kings Walk</a></td><td>Feb 2026</td><td>LOW to MEDIUM</td><td>Central Developments</td></tr>
+<tr><td><a href="https://www.waterdashboard.co.za/">Water Dashboard (City data)</a></td><td>23 Oct 2026</td><td>MEDIUM</td><td>Dam level 74.0%</td></tr>
+<tr><td><a href="https://www.timeslive.co.za/news/south-africa/2026-02-08-rand-water-warns-high-consumption-is-destabilising-gautengs-water-supply/">TimesLive, Rand Water</a></td><td>8 Feb 2026</td><td>MEDIUM</td><td>Gauteng supply pressure</td></tr>
+<tr><td><a href="https://www.bizcommunity.com/article/shopping-on-eastway-breaks-ground-as-experiential-retail-takes-centre-stage-in-midstream-403869a">Bizcommunity, Shopping on Eastway</a></td><td>24 Apr 2026</td><td>MEDIUM</td><td>Rejected as too late</td></tr>
+<tr><td><a href="https://www.rustourismnews.com/2026/07/02/nh-johannesburg-sandton-completes-major-upgrade-of-meetings-events-facilities/">Rustourismnews, NH Sandton</a></td><td>2 Jul 2026</td><td>MEDIUM</td><td>Hospitality watchlist</td></tr>
+<tr><td><a href="https://www.theherald.co.za/sport/more-sport/2026-07-07-hudson-park-hands-over-site-for-new-astroturf-development/">The Herald, Hudson Park</a></td><td>7 Jul 2026</td><td>MEDIUM</td><td>Competitor activity (out of region)</td></tr>
+<tr><td><a href="https://www.greenfix.co.za/artificial-grass-prices-cape-town">Greenfix, Cape Town prices</a></td><td>2026</td><td>LOW</td><td>Competitor price band</td></tr>
+</tbody></table></div>
+<p class="small">The remaining sources (Stellenbosch tender, Evergreen, Epic Padel, Drakenzicht, Waterfall City and others) are in the Notion Sources database. The 11 Nov and 22 to 24 Oct water items come from search summaries and should be fetched before being quoted. This report adds no new records to the CRM.</p>
+</div>
+
+<script>
+document.querySelectorAll("button.copy").forEach(function(b){
+  b.addEventListener("click",function(){
+    var el=document.getElementById(b.dataset.t);
+    var txt=el?el.innerText:"";
+    function done(m){b.textContent=m;setTimeout(function(){b.textContent="Copy"},1600)}
+    try{
+      navigator.clipboard.writeText(txt).then(function(){done("Copied")},function(){sel()});
+    }catch(e){sel()}
+    function sel(){
+      try{var r=document.createRange();r.selectNodeContents(el);var s=getSelection();s.removeAllRanges();s.addRange(r);done("Selected")}catch(e){}
+    }
+  });
+});
+</script>
+
+</body></html>
