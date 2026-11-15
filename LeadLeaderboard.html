@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PrimeTurf Lead Leaderboard</title>
+<style>
+:root { --color-bg:#fbfaf7; --color-fg:#1a1f1c; --color-fg-muted:#5b6660; --color-panel:#ffffff; --color-border-line:#e2e0d8; --font-anthropic-sans:Montserrat,"Helvetica Neue",Arial,sans-serif; --font-anthropic-serif:"Cormorant Garamond",Georgia,serif; }
+body { margin:0; padding:24px 16px; background:var(--color-bg); color:var(--color-fg); }
+#ptlb { --pt-green: #1A5A28; --pt-deep: #1A3A2A; --pt-gold: #B8902A; --pt-gold-text: #8A6B20; --pt-muted: #4B6456; font-family: var(--font-anthropic-sans), Montserrat, 'Helvetica Neue', Arial, sans-serif; color: var(--color-fg); max-width: 1080px; margin: 0px auto; }
+#ptlb .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--pt-gold-text); }
+#ptlb h1 { font-family: Cinzel, Georgia, serif; font-weight: 400; letter-spacing: 0.02em; font-size: clamp(26px, 4vw, 38px); margin: 4px 0px 6px; color: var(--color-fg); }
+#ptlb .sub { color: var(--color-fg-muted); font-size: 14px; margin-bottom: 20px; max-width: 640px; }
+#ptlb .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
+#ptlb .stat { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: 10px; padding: 16px 18px; min-width: 0px; }
+#ptlb .stat .label { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-fg-muted); margin-bottom: 6px; }
+#ptlb .stat .value { font-family: var(--font-anthropic-serif), 'Cormorant Garamond', Georgia, serif; font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.1; color: var(--color-fg); }
+#ptlb .stat .value small { font-size: 13px; font-weight: 500; color: var(--color-fg-muted); font-family: var(--font-anthropic-sans), Montserrat, sans-serif; }
+#ptlb .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+#ptlb .filter-btn { font-family: inherit; font-size: 12.5px; font-weight: 600; letter-spacing: 0.02em; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--color-border-line); background: var(--color-panel); color: var(--color-fg-muted); cursor: pointer; }
+#ptlb .filter-btn[aria-pressed="true"] { background: var(--pt-green); border-color: var(--pt-green); color: rgb(255, 255, 255); }
+#ptlb .hint { font-size: 12px; color: var(--color-fg-muted); margin-bottom: 14px; }
+#ptlb .table-wrap { overflow-x: auto; border: 1px solid var(--color-border-line); border-radius: 10px; }
+#ptlb table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 13.5px; }
+#ptlb thead th { text-align: left; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-fg-muted); background: var(--color-panel); padding: 10px 12px; border-bottom: 1px solid var(--color-border-line); white-space: nowrap; }
+#ptlb tbody td { padding: 10px 12px; border-bottom: 1px solid var(--color-border-line); vertical-align: middle; }
+#ptlb tbody tr.lead-row { cursor: pointer; }
+#ptlb tbody tr.lead-row:hover td { background: color-mix(in srgb, var(--pt-green) 6%, transparent); }
+#ptlb tbody tr.lead-row[aria-expanded="true"] td { background: color-mix(in srgb, var(--pt-green) 9%, transparent); }
+#ptlb tbody tr:last-child td { border-bottom-width: medium; border-bottom-style: none; border-bottom-color: currentcolor; }
+#ptlb .rank { font-family: var(--font-anthropic-serif), 'Cormorant Garamond', Georgia, serif; font-weight: 600; color: var(--color-fg-muted); text-align: right; width: 1%; }
+#ptlb .name { font-weight: 600; min-width: 200px; }
+#ptlb .name .meta { font-weight: 400; font-size: 11.5px; color: var(--color-fg-muted); margin-top: 2px; }
+#ptlb .loc { color: var(--color-fg-muted); min-width: 180px; }
+#ptlb .score { font-family: var(--font-anthropic-serif), 'Cormorant Garamond', Georgia, serif; font-weight: 700; font-size: 16px; font-variant-numeric: tabular-nums; }
+#ptlb .caret { color: var(--color-fg-muted); font-size: 11px; width: 1%; text-align: center; }
+#ptlb .pill { display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+#ptlb .type-buyer { background: color-mix(in srgb, var(--pt-green) 16%, transparent); color: var(--pt-green); }
+#ptlb .type-affiliate { background: color-mix(in srgb, var(--pt-gold) 22%, transparent); color: var(--pt-gold-text); }
+#ptlb .band-hot { background: color-mix(in srgb, rgb(194, 59, 34) 16%, transparent 84%); color: rgb(194, 59, 34); }
+#ptlb .band-high { background: color-mix(in srgb, var(--pt-gold) 24%, transparent); color: var(--pt-gold-text); }
+#ptlb .band-qualified { background: color-mix(in srgb, var(--pt-green) 16%, transparent); color: var(--pt-green); }
+#ptlb .band-lost { background: var(--color-border-line); color: var(--color-fg-muted); }
+@media (prefers-color-scheme: dark) {
+  #ptlb .band-hot { color: rgb(255, 138, 104); }
+  #ptlb .type-buyer { color: rgb(111, 207, 138); }
+}
+#ptlb .detail-row td { padding: 0px; border-bottom: 1px solid var(--color-border-line); }
+#ptlb .detail { padding: 18px 20px 22px; background: var(--color-panel); display: grid; grid-template-columns: repeat(2, minmax(0px, 1fr)); gap: 14px 24px; }
+#ptlb .detail-field { min-width: 0px; }
+#ptlb .detail-field .dlabel { font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--pt-gold-text); margin-bottom: 4px; }
+#ptlb .detail-field .dvalue { font-size: 13.5px; line-height: 1.5; color: var(--color-fg); overflow-wrap: anywhere; }
+#ptlb .detail-field.full { grid-column: 1 / -1; }
+#ptlb .opening-box { background: var(--color-bg); border: 1px solid var(--color-border-line); border-radius: 8px; padding: 12px 14px; font-family: var(--font-anthropic-serif), 'Cormorant Garamond', Georgia, serif; font-style: italic; font-size: 14.5px; line-height: 1.55; color: var(--color-fg); }
+#ptlb .copy-btn { font-family: inherit; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 5px 11px; margin-top: 8px; border-radius: 6px; border: 1px solid var(--pt-green); background: transparent; color: var(--pt-green); cursor: pointer; }
+#ptlb .copy-btn.copied { background: var(--pt-green); color: rgb(255, 255, 255); }
+@media (max-width: 560px) {
+  #ptlb .detail { grid-template-columns: 1fr; }
+}
+#ptlb .foot-note { margin-top: 16px; font-size: 12px; color: var(--color-fg-muted); line-height: 1.5; }
+</style>
+</head>
+<body>
+<div id="ptlb">
+  <div class="eyebrow">Gauteng &amp; Western Cape</div>
+  <h1>Lead Leaderboard</h1>
+  <div class="sub">Every lead that has scored ≥70 across all daily prospecting cycles, ranked high to low. Click any row for the full contact sheet — decision-maker, best channel, and the drafted opening line, ready to call or send.</div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="label">Qualified leads</div>
+      <div class="value" data-source="stats" data-field="total" data-row="0" data-dash-source-state="empty">—</div>
+    </div>
+    <div class="stat">
+      <div class="label">Buyer / Affiliate split</div>
+      <div class="value"><span data-source="stats" data-field="buyers" data-row="0" data-dash-source-state="empty">—</span><small> / </small><span data-source="stats" data-field="affiliates" data-row="0" data-dash-source-state="empty">—</span></div>
+    </div>
+    <div class="stat">
+      <div class="label">Average score</div>
+      <div class="value" data-source="stats" data-field="avgScore" data-row="0" data-dash-source-state="empty">—</div>
+    </div>
+    <div class="stat">
+      <div class="label">Longest tracked, unconverted</div>
+      <div class="value" data-source="stats" data-field="oldestCycles" data-row="0">—<small> cycles</small></div>
+    </div>
+  </div>
+
+  <div class="filters" role="group" aria-label="Filter leads">
+    <button type="button" class="filter-btn" data-filter="ALL" aria-pressed="true">All</button>
+    <button type="button" class="filter-btn" data-filter="HOT" aria-pressed="false">Hot (85+)</button>
+    <button type="button" class="filter-btn" data-filter="HIGH" aria-pressed="false">High (75–84)</button>
+    <button type="button" class="filter-btn" data-filter="BUYER" aria-pressed="false">Buyers only</button>
+    <button type="button" class="filter-btn" data-filter="AFFILIATE" aria-pressed="false">Affiliates only</button>
+    <button type="button" class="filter-btn" data-filter="LOST" aria-pressed="false">Lost</button>
+  </div>
+  <div class="hint">Showing <span id="ptlb-count">35</span> leads.</div>
+
+  <div class="table-wrap">
+    <table data-source="leads" data-row-key="name">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th data-field="name">Name</th>
+          <th data-field="type">Type</th>
+          <th data-field="score">Score</th>
+          <th data-field="band">Band</th>
+          <th data-field="location">Location</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody><tr class="lead-row" aria-expanded="false"><td class="rank">1</td><td class="name"><div>Central Developments (Kings Walk/Birdhorn/Phesantekraal/Bergvallei)</div><div class="meta">HOT - unactioned 53 days</div></td><td><span class="pill type-buyer">BUYER</span></td><td class="score">92</td><td><span class="pill band-hot">HOT</span></td><td class="loc">Pretoria East/Midstream/Centurion/Montana GP + Durbanville WC</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">2</td><td class="name"><div>Penguin Pools</div><div class="meta">HOT - unactioned 44 days</div></td><td><span class="pill type-affiliate">AFFILIATE</span></td><td class="score">88</td><td><span class="pill band-hot">HOT</span></td><td class="loc">Gauteng + Western Cape</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">3</td><td class="name"><div>Evergreen Lifestyle (Sitari/Noordhoek/Val de Vie)</div><div class="meta">HOT - unactioned 44 days</div></td><td><span class="pill type-buyer">BUYER</span></td><td class="score">87</td><td><span class="pill band-hot">HOT</span></td><td class="loc">Western Cape (3 sites)</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">4</td><td class="name"><div>Padel Build</div><div class="meta">HOT - unactioned</div></td><td><span class="pill type-affiliate">AFFILIATE</span></td><td class="score">87</td><td><span class="pill band-hot">HOT</span></td><td class="loc">National</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">5</td><td class="name"><div>De Zandt Lifestyle Estate</div><div class="meta">HOT - unactioned</div></td><td><span class="pill type-buyer">BUYER</span></td><td class="score">87</td><td><span class="pill band-hot">HOT</span></td><td class="loc">Hermanus, Western Cape</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">6</td><td class="name"><div>GrandWest Mall / Flanagan &amp; Gerard</div><div class="meta">HOT - unactioned</div></td><td><span class="pill type-buyer">BUYER</span></td><td class="score">86</td><td><span class="pill band-hot">HOT</span></td><td class="loc">Goodwood, Cape Town</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">7</td><td class="name"><div>Evergreen Turf</div><div class="meta">PARTNERSHIP CANDIDATE - Day 4, still not called</div></td><td><span class="pill type-affiliate">LANDSCAPER-AFFILIATE</span></td><td class="score">86</td><td><span class="pill band-hot">HOT</span></td><td class="loc">Gauteng (Johannesburg HQ, farms near JHB/Pretoria)</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">8</td><td class="name"><div>Leratong City Regional Mall</div><div class="meta">LOST - confirmed opening Oct 2026, decision already passed</div></td><td><span class="pill type-buyer">BUYER</span></td><td class="score">85</td><td><span class="pill band-lost">LOST</span></td><td class="loc">Mogale City, Gauteng</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">9</td><td class="name"><div>Trafalgar Property Management</div><div class="meta">HOT - unactioned 29 days</div></td><td><span class="pill type-affiliate">AFFILIATE</span></td><td class="score">85</td><td><span class="pill band-hot">HOT</span></td><td class="loc">National (JHB/Pretoria/Cape Town+)</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">10</td><td class="name"><div>Shopping on Eastway</div><div class="meta">HOT - unactioned</div></td><td><span class="pill type-buyer">BUYER</span></td><td class="score">84</td><td><span class="pill band-high">HIGH</span></td><td class="loc">Midstream Estate, Centurion</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">11</td><td class="name"><div>Featherlands Lifestyle Estate</div><div class="meta">HIGH - unactioned</div></td><td><span class="pill type-buyer">BUYER</span></td><td class="score">84</td><td><span class="pill band-high">HIGH</span></td><td class="loc">Hermanus, Western Cape</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">12</td><td class="name"><div>CDB Group</div><div class="meta">HIGH - unactioned</div></td><td><span class="pill type-affiliate">AFFILIATE</span></td><td class="score">84</td><td><span class="pill band-high">HIGH</span></td><td class="loc">Equestria, Pretoria</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">13</td><td class="name"><div>KH Landscape Architects</div><div class="meta">QUALIFIED - carryover</div></td><td><span class="pill type-affiliate">AFFILIATE</span></td><td class="score">84</td><td><span class="pill band-high">HIGH</span></td><td class="loc">Gauteng/WC</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">14</td><td class="name"><div>Balwin Properties</div><div class="meta">HIGH - unactioned 23 days</div></td><td><span class="pill type-buyer">BUYER</span></td><td class="score">84</td><td><span class="pill band-high">HIGH</span></td><td class="loc">Gauteng (Mooikloof/Thaba Eco/Munyaka/Mall of Africa)</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">15</td><td class="name"><div>Attacq Limited (Waterfall City precinct)</div><div class="meta">HIGH - carryover</div></td><td><span class="pill type-buyer">BUYER</span></td><td class="score">83</td><td><span class="pill band-high">HIGH</span></td><td class="loc">Midrand, Gauteng</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">16</td><td class="name"><div>Kings Walk, Pretoria East (The Moolman Group)</div><div class="meta">HIGH - unactioned 15 days</div></td><td><span class="pill type-buyer">BUYER</span></td><td class="score">83</td><td><span class="pill band-high">HIGH</span></td><td class="loc">Pretoria East, Gauteng</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">17</td><td class="name"><div>MDS Architecture</div><div class="meta">HIGH - unactioned 15 days</div></td><td><span class="pill type-affiliate">AFFILIATE</span></td><td class="score">83</td><td><span class="pill band-high">HIGH</span></td><td class="loc">Pretoria/Gauteng</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">18</td><td class="name"><div>Sandalwood Estate</div><div class="meta">QUALIFIED - carryover</div></td><td><span class="pill type-buyer">BUYER</span></td><td class="score">81</td><td><span class="pill band-high">HIGH</span></td><td class="loc">Gauteng</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">19</td><td class="name"><div>Stonewood Property Management</div><div class="meta">QUALIFIED - carryover</div></td><td><span class="pill type-affiliate">AFFILIATE</span></td><td class="score">81</td><td><span class="pill band-high">HIGH</span></td><td class="loc">Gauteng/WC</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">20</td><td class="name"><div>Nox Rentals</div><div class="meta">HIGH - unactioned</div></td><td><span class="pill type-affiliate">AFFILIATE</span></td><td class="score">80</td><td><span class="pill band-high">HIGH</span></td><td class="loc">Camps Bay/Clifton (Bakoven), Cape Town</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">21</td><td class="name"><div>Groot Parys Lifestyle Estate (clubhouse)</div><div class="meta">HIGH - unactioned 12 days, independently re-verified today via L2B</div></td><td><span class="pill type-buyer">BUYER</span></td><td class="score">80</td><td><span class="pill band-high">HIGH</span></td><td class="loc">Paarl, Western Cape</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">22</td><td class="name"><div>Lakeside Village Lifestyle Estate (Silver Lakes)</div><div class="meta">NEW - QUALIFIED</div></td><td><span class="pill type-buyer">BUYER</span></td><td class="score">80</td><td><span class="pill band-high">HIGH</span></td><td class="loc">Silver Lakes, Pretoria East, Gauteng</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">23</td><td class="name"><div>Zanddrift Lifestyle Estate</div><div class="meta">QUALIFIED - unactioned</div></td><td><span class="pill type-buyer">BUYER</span></td><td class="score">79</td><td><span class="pill band-high">HIGH</span></td><td class="loc">Paarl South, WC</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">24</td><td class="name"><div>Irene Link (Phase F, Giflo Property Developers)</div><div class="meta">HIGH - carryover, decision-maker unresolved</div></td><td><span class="pill type-buyer">BUYER</span></td><td class="score">78</td><td><span class="pill band-high">HIGH</span></td><td class="loc">Centurion, Gauteng</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">25</td><td class="name"><div>Mafadi Group</div><div class="meta">needs phone call to division, not a scraped contact</div></td><td><span class="pill type-affiliate">AFFILIATE</span></td><td class="score">78</td><td><span class="pill band-high">HIGH</span></td><td class="loc">Johannesburg (national)</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">26</td><td class="name"><div>The Friendly Plant</div><div class="meta">unactioned (Day 4)</div></td><td><span class="pill type-affiliate">LANDSCAPER-AFFILIATE</span></td><td class="score">78</td><td><span class="pill band-high">HIGH</span></td><td class="loc">Muldersdrift, Gauteng</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">27</td><td class="name"><div>The Charles (Lord Charles Estate, Somerset West)</div><div class="meta">HIGH - pre-construction, open window</div></td><td><span class="pill type-buyer">BUYER</span></td><td class="score">76</td><td><span class="pill band-high">HIGH</span></td><td class="loc">Somerset West, Western Cape</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">28</td><td class="name"><div>Oasis Life Sunningdale</div><div class="meta">NEW - QUALIFIED, verify construction status on first call</div></td><td><span class="pill type-buyer">BUYER</span></td><td class="score">75</td><td><span class="pill band-high">HIGH</span></td><td class="loc">Sunningdale, Cape Town</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">29</td><td class="name"><div>EcoTurf Instant Lawn</div><div class="meta">NEW - QUALIFIED, directory-sourced contact, verify on first call</div></td><td><span class="pill type-affiliate">LANDSCAPER-AFFILIATE</span></td><td class="score">75</td><td><span class="pill band-high">HIGH</span></td><td class="loc">Krugersdorp, Gauteng</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">30</td><td class="name"><div>Calais Estate (Paarl East)</div><div class="meta">QUALIFIED - carryover, not re-verified today</div></td><td><span class="pill type-buyer">BUYER</span></td><td class="score">72</td><td><span class="pill band-qualified">QUALIFIED</span></td><td class="loc">Paarl East, WC</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">31</td><td class="name"><div>Newinbosch Neighbourhood Estate (Stellenbosch)</div><div class="meta">QUALIFIED - carryover, not re-verified today</div></td><td><span class="pill type-buyer">BUYER</span></td><td class="score">72</td><td><span class="pill band-qualified">QUALIFIED</span></td><td class="loc">Stellenbosch, WC</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">32</td><td class="name"><div>Exclusive Landscapes</div><div class="meta">unactioned (Day 4)</div></td><td><span class="pill type-affiliate">LANDSCAPER-AFFILIATE</span></td><td class="score">72</td><td><span class="pill band-qualified">QUALIFIED</span></td><td class="loc">Akasia, Pretoria (Winternest), Gauteng</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">33</td><td class="name"><div>Longmans Landscaping</div><div class="meta">unactioned (Day 2), directory-sourced contact pending verification</div></td><td><span class="pill type-affiliate">LANDSCAPER-AFFILIATE</span></td><td class="score">72</td><td><span class="pill band-qualified">QUALIFIED</span></td><td class="loc">Fish Hoek/Cape Peninsula, Western Cape</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">34</td><td class="name"><div>Abland Property Developers (Century City, Cape Town)</div><div class="meta">QUALIFIED - carryover, decision-maker unresolved</div></td><td><span class="pill type-buyer">BUYER</span></td><td class="score">71</td><td><span class="pill band-qualified">QUALIFIED</span></td><td class="loc">Cape Town, Western Cape</td><td class="caret">▼</td></tr><tr class="lead-row" aria-expanded="false"><td class="rank">35</td><td class="name"><div>Jacks Instant Lawn &amp; Irrigation Services</div><div class="meta">NEW - QUALIFIED</div></td><td><span class="pill type-affiliate">LANDSCAPER-AFFILIATE</span></td><td class="score">71</td><td><span class="pill band-qualified">QUALIFIED</span></td><td class="loc">Heuweloord, Centurion, Gauteng (serves all Gauteng)</td><td class="caret">▼</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="foot-note">Scores reflect each lead's most recent cycle. "Cycles tracked" (shown when a row is expanded) counts how many daily cycles a lead has been carried without converting — the routine's proxy for conversion risk. Source: the "PrimeTurf Leads." Google Sheet, Leads Tracker tab, cycles 2026-10-05 through 2026-11-12. Refreshed 2026-11-15. Contact details and decision-maker names come from public sources and are flagged unverified where the daily reports flagged them unverified — confirm on first contact.</div>
+</div>
+</body>
+</html>
